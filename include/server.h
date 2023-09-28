@@ -6,9 +6,6 @@
 
 #define MYPORT 22222
 
-struct sockaddr_in my_addr;
-socklen_t addr_size;
-
 struct sockaddr_in {
     sa_family_t sin_family;
     // short sin_family;         // e.g. AF_INET, AF_INET6
