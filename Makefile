@@ -41,8 +41,18 @@ slave:
 
 .PHONY: client
 client:
-	./$(MONITORS)/$(MB_CLIENT_MONITOR).$(BUILDEXTENS) -m tcp 127.0.0.1 
+	sudo ./$(MONITORS)/$(MB_CLIENT_MONITOR).$(BUILDEXTENS) -m tcp 127.0.0.1 
+
+.PHONY: run
+run:
+	./$(BIN)/app.$(BUILDEXTENS)
 
 .PHONY: clean
 clean:
 	rm -f $(BIN)/*
+	clear
+
+.PHONY: tcptest
+tcptest:
+	$(CC) $(CFLAGS) -o $(BIN)/tcptest.$(BUILDEXTENS) $(SRC)/ModbusTCP/ModbusTCP.c -I$(INCLUDE) -lrt
+

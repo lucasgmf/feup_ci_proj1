@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.m": "wat",
+        "*.py": "python",
+        "ctype.h": "c"
+    }
+}
