@@ -11,11 +11,11 @@
  *
  * @param ip The IP address of the server.
  * @param port The port number to connect to.
- * @param request The APDU (Application Protocol Data Unit) to request.
- * @param requestLength The length of the APDU.
+ * @param APDUreq The APDU (Application Protocol Data Unit) to request.
+ * @param APDUreqLen The length of the APDU.
  * @param response The buffer to store the response.
- * @param responseLength The length of the response buffer.
+ * @param responseLen The length of the response buffer.
  * @return int Returns 0 on success, or a negative value on failure.
  */
-int sendModbusReq(char *ip, int port, char *request, int requestLength, char *response, int responseLength);
+int sendModbusReq(char *ip, unsigned int port, uint8_t *APDUreq, uint16_t APDUreqLen, uint8_t *response, uint16_t responseLen);
 

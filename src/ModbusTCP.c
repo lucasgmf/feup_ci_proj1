@@ -15,7 +15,7 @@
 #define UNIT_ID 0x01  // Slave ID - //! Verify if this is correct
 
 //? Note that the function is also recieving the server response
-int sendModbusReq(char *ip, unsigned int port, uint8_t *APDUreq, uint16_t APDUreqLen, uint8_t *response, uint16_t responseLength) {
+int sendModbusReq(char *ip, unsigned int port, uint8_t *APDUreq, uint16_t APDUreqLen, uint8_t *response, uint16_t responseLen) {
     int fd;  // File descriptor
     struct sockaddr_in server;
 
@@ -29,10 +29,10 @@ int sendModbusReq(char *ip, unsigned int port, uint8_t *APDUreq, uint16_t APDUre
     }
 
     // Prepare sockaddr_in structure
-    // memset(&server_addr, 0, sizeof(server_addr));
+    // memset(&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htons(port);
-    inet_pton(AF_INET, ip, &server.sin_addr);
+    inet_aton(ip, &server.sin_addr);
 
     // Connect to server
     if (connect(fd, (struct sockaddr *)&server, sizeof(server)) < 0) {

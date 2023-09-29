@@ -37,7 +37,7 @@ $(BIN)/app.$(BUILDEXTENS): $(APP) $(SRC)/*.c
 
 .PHONY: slave
 slave:
-	sudo ./$(MONITORS)/$(MB_SLAVE_MONITOR).$(BUILDEXTENS) 
+	sudo ./$(MONITORS)/$(MB_SLAVE_MONITOR).$(BUILDEXTENS)  -m tcp -p 502
 
 .PHONY: client
 client:
