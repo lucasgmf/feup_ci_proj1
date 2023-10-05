@@ -14,12 +14,14 @@
 
 int tcpCreateSocket() {
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
+
     if (socketfd < 0) {
         printf("[TCP] - Error creating socket\n");
         return -1;
     } else {
         printf("[TCP] - Socket created\n");
     }
+
     return socketfd;
 }
 
@@ -27,14 +29,19 @@ int tcpConnect(int socketfd, char *ip, int port) {
     struct sockaddr_in server;
 
     server.sin_family = AF_INET;
+    server.sin_addr.s_addr = inet_addr(ip);
     server.sin_port = htons(port);
 
-    // server.sin_addr.s_addr = inet_addr(ip);
-    if (inet_aton(ip, &server.sin_addr) == 0) {
-        printf("[TCP] - Error: Invalid IP address\n");
+    // if (inet_aton(ip, &server.sin_addr) == 0) {
+    //     printf("[TCP] - Error: Invalid IP address\n");
+    //     return -1;
+    // }
+    if (connect(socketfd, (struct sockaddr *)&server, sizeof(server)) == -1) {
+        printf("[TCP] - Error: Connection to the server failed\n");
         return -1;
     }
-    return connect(socketfd, (struct sockaddr *)&server, sizeof(server));
+
+    return 1;
 }
 
 int tcpDisconnect(int socketfd) {
@@ -42,12 +49,6 @@ int tcpDisconnect(int socketfd) {
 }
 
 int tcpSendMBAP(int socketfd, uint8_t *pdu, int pduLen, int id) {
-    // printf("\n[INFO][TCP] - PDU: ");
-    // for (int i = 0; i < pduLen; i++) {
-    //     printf("%02X ", pdu[i]);
-    // }
-    // printf("\n\n\n");
-
     if (socketfd < 0) {
         printf("[TCP] - Error: Invalid socket file descriptor\n");
         return -1;
@@ -64,13 +65,14 @@ int tcpSendMBAP(int socketfd, uint8_t *pdu, int pduLen, int id) {
     // Build MBAPDU header (MBAP = Modbus Application Protocol)
     // unsigned char MBAP[MBAP_SIZE];
     uint8_t MBAP[MBAP_SIZE];
+
     MBAP[0] = (uint8_t)(id >> 8) & 0xFF;      // Transaction identifier (high byte)
     MBAP[1] = (uint8_t)id & 0xFF;             // Transaction identifier (low byte)
     MBAP[2] = (uint8_t)(0x00 >> 8) & 0xFF;    // Protocol identifier (high byte) - 0x00 = Modbus
     MBAP[3] = (uint8_t)0x00 & 0xFF;           // Protocol identifier (low byte) - 0x00 = Modbus
     MBAP[4] = (uint8_t)(pduLen >> 8) & 0xFF;  // Message length (high byte)
     MBAP[5] = (uint8_t)pduLen & 0xFF;         // Message length (low byte)
-    MBAP[6] = (uint8_t)UNIT_ID & 0xFF;        // Unit identifier - Slave ID
+    MBAP[6] = (uint8_t)UNIT_ID;               // Unit identifier - Slave ID
 
     pduLen = pduLen - 1;  // PDU length - unit identifier
 
@@ -95,16 +97,38 @@ int tcpSendMBAP(int socketfd, uint8_t *pdu, int pduLen, int id) {
         return -1;
     }
 
-    printf("[TCP] - Message sent to Slave: ");
-    for (int i = 0; i < MBAP_SIZE; i++) {
-        printf("%.2X ", MBAP[i]);
-    }
-    for (int i = 0; i < pduLen; i++) {
-        printf("%.2X ", pdu[i]);
-    }
-    printf("\n");
+    // uint8_t *MBAPDU = (uint8_t *)malloc((MBAP_SIZE + pduLen) * sizeof(*MBAPDU));
+    // if (MBAPDU == NULL) {
+    //     printf("[TCP] - Error: Failed to allocate memory\n");
+    //     return -1;
+    // }
+    // memcpy(MBAPDU, MBAP, MBAP_SIZE);
+    // memcpy(MBAPDU + MBAP_SIZE, pdu, pduLen);
 
-    return ((MBAP[4] << 8) + MBAP[5]);  // recover Lenght field
+    // printf("[TCP] - MBAPDU: ");
+    // for (int i = 0; i < totalLen; i++) {
+    //     printf("%02X ", MBAPDU[i]);
+    // }
+    // printf("\n");
+
+    // int n = 0, sent = 0;
+
+    // while (n < totalLen) {
+    //     n = send(socketfd, MBAPDU + sent, totalLen - sent, 0);
+    //     printf("[TCP] - Sent %d bytes\n", n);
+
+    //     if (n < 0) {
+    //         printf("[TCP] - Error sending MBAP header to socket\n");
+    //         return -1;
+    //     }
+    //     sent += n;
+    // }
+
+    // printf("[TCP] - Finished sending packet with %d bytes\n", sent);
+    // free(MBAPDU);
+    // return ((MBAP[4] << 8) + MBAP[5]);  // recover Lenght field
+
+    return MBAP_SIZE + pduLen;
 }
 
 uint8_t *tcpRecieveMBAP(int socketfd, uint8_t *response, int responseLen) {
@@ -117,21 +141,6 @@ uint8_t *tcpRecieveMBAP(int socketfd, uint8_t *response, int responseLen) {
         return NULL;
     }
 
-    // Reading response from socket
-    // int bytes_read = 0;
-    // int result;
-    // while (bytes_read < responseLen) {
-    //     printf("[TCP] - Bytes read: %d\n", bytes_read);
-    //     printf("[TCP] - Response length: %d\n", responseLen);
-
-    //     result = read(socketfd, response + bytes_read, responseLen - bytes_read);
-    //     printf("[TCP] - Bytes read: %d\n", result);
-    //     if (result < 0) {
-    //         printf("[TCP] - Error reading response from socket\n");
-    //         return NULL;
-    //     }
-    //     bytes_read += result;
-    // }
     printf("[TCP] - Starting reciving response\n");
 
     if (read(socketfd, response, responseLen) > 0) {
@@ -148,121 +157,3 @@ uint8_t *tcpRecieveMBAP(int socketfd, uint8_t *response, int responseLen) {
 
     return response;
 }
-
-// int sendModbusReq(int socketfd, uint8_t *APDUreq, uint16_t APDUreqLen, uint16_t id) {
-//     // Connect to server
-//     if (connect(fd, (struct sockaddr *)&server, sizeof(server)) < 0) {
-//         printf("[TCP] - Error connecting to server\n");
-//         close(fd);
-//         return -1;
-//     } else {
-//         printf("[TCP] - Connected to server\n");
-//     }
-
-//     // Building MBAPDU header (MBAP = Modbus Application Protocol)
-//     unsigned char MBAP[MBAP_SIZE];  // not initialized with 0's
-//     uint16_t TI = 1;                //! maybe not best solution
-
-//     MBAP[0] = (uint8_t)(TI >> 8);
-//     MBAP[1] = (uint8_t)(TI & 0xFF);
-//     MBAP[2] = 0x00;  // Protocol identifier (high byte) - 0x00 = Modbus
-//     MBAP[3] = 0x00;  // Protocol identifier (low byte) - 0x00 = Modbus
-//     // MBAP[4] = (uint8_t)(APDUreqLen >> 8);  // Message length (high byte)
-//     MBAP[4] = (uint8_t)((APDUreqLen + 1) >> 8);  // Message length (high byte)
-//     // MBAP[5] = (uint8_t)(APDUreqLen & 0xFF);  // Message length (low byte)
-//     MBAP[5] = (uint8_t)((APDUreqLen + 1) & 0xFF);  // Message length (low byte)
-//     MBAP[6] = UNIT_ID;                             // Unit identifier
-
-//     printf("[TCP] - MBAP: ");
-//     for (int i = 0; i < MBAP_SIZE; i++) {
-//         printf("%02X ", MBAP[i]);
-//     }
-//     printf("\n");
-
-//     // (MBAPDU = MBAP + PDU)
-//     // Writing MBAPDU header to socket
-//     if (write(fd, MBAP, MBAP_SIZE) < 0) {
-//         printf("[TCP] - Error sending MBAPDU header to socket\n");
-//         return -1;
-//     }
-//     // Writing APDU request to socket
-//     if (write(fd, APDUreq, APDUreqLen) < 0) {
-//         printf("[TCP] - Error sending APDU request to socket\n");
-//         return -1;
-//     }
-
-//     printf("[TCP] - Message sent to Slave: ");
-//     for (int i = 0; i < MBAP_SIZE; i++) {
-//         // printf("%02X ", MBAP[i]);
-//         printf("%.2X ", MBAP[i]);
-//     }
-//     for (int i = 0; i < APDUreqLen; i++) {
-//         // printf("%02X ", APDUreq[i]);
-//         printf("%.2X ", APDUreq[i]);
-//     }
-
-//     int len = (MBAP[4] << 8) + MBAP[5];  // recover Lenght field
-//     printf("[TCP] - Response length: %d", len);
-//     printf("\n[TCP] - Message successfully sent to Slave\n");
-//     return 1;
-// }
-
-// int sendAPDUtoServer(int socketfd, uint8_t *APDUreq, uint16_t APDUreqLen) {
-// }
-
-// int recieveModbusReq(int socketfd, uint8_t *response, uint16_t responseLen) {
-//     int fd;  // File descriptor
-//     struct sockaddr_in server;
-
-//     // Create socket
-//     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-//     if (fd < 0) {
-//         printf("[TCP] - Error creating socket\n");
-//         return -1;
-//     } else {
-//         printf("[TCP] - Socket created\n");
-//     }
-
-//     MBAP[0] = (uint8_t)(TI >> 8);
-//     MBAP[1] = (uint8_t)(TI & 0xFF);
-//     MBAP[2] = 0x00;  // Protocol identifier (high byte) - 0x00 = Modbus
-//     MBAP[3] = 0x00;  // Protocol identifier (low byte) - 0x00 = Modbus
-//     // MBAP[4] = (uint8_t)(APDUreqLen >> 8);  // Message length (high byte)
-//     MBAP[4] = (uint8_t)((responseLen + 1) >> 8);  // Message length (high byte)
-//     // MBAP[5] = (uint8_t)(APDUreqLen & 0xFF);  // Message length (low byte)
-//     MBAP[5] = (uint8_t)((responseLen + 1) & 0xFF);  // Message length (low byte)
-//     MBAP[6] = UNIT_ID;
-//     int len = (MBAP[4] << 8) + MBAP[5];
-
-//     // Reading response from socket
-//     int bytes_read = 0;
-//     while (bytes_read < len - 1) {
-//         int result = read(fd, response + bytes_read, len - 1 - bytes_read);
-//         printf("[TCP] - Bytes read: %d\n", result);
-//         if (result < 0) {
-//             printf("[TCP] - Error reading response from socket\n");
-//             return -1;
-//         }
-//         bytes_read += result;
-//     }
-
-//     printf("\n[TCP] - Message received from Slave:");
-//     for (int i = 0; i < len - 1; i++) {
-//         // printf("%02X ", response[i]);
-//         printf("%.2X ", response[i]);
-//     }
-
-//     close(fd);
-//     return 0;
-// }
-
-// uint8_t *createRegisters(uint16_t startingAddress, uint16_t numberOfRegisters, ) {
-//     uint8_t *pdu = (uint8_t *)malloc(sizeof(uint8_t) * numberOfRegisters * 2);
-
-//     if (pdu == NULL) {
-//         printf("[App][createRegisters] - Error: Failed to allocate memory\n");
-//         return NULL;
-//     }
-
-//     pdu[0] = (uint8_t) return registers;
-// }

@@ -51,6 +51,7 @@ int main() {
     while (1) {
         printf("[Main] - Reading holding registers begin with starting address: %d, quantity: %d\n", readAddress, readQuantity);
         data = readHoldingRegisters(socketfd, readAddress, readQuantity, &dataLength);
+        printf("[Main] - data: %p\n", data);
         if (data == NULL) {
             printf("[Main] - Error reading holding registers\n");
             return -1;
