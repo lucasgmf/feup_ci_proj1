@@ -2,6 +2,8 @@
     "files.associations": {
         "*.m": "wat",
         "*.py": "python",
-        "ctype.h": "c"
+        "ctype.h": "c",
+        "modbusapp.h": "c",
+        "modbustcp.h": "c"
     }
 }

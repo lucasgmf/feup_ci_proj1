@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "ModbusTCP.h"
+#include "include/ModbusApp.h"
+#define IN_BUFF_SIZE 100
 
 int main(int argc, char *argv[]) {
     // if (argc < 4) {
@@ -17,7 +18,16 @@ int main(int argc, char *argv[]) {
     //     printf("Invalid argument\n");
     //     exit(1);
     // }
+    int errorCode;
+    char *userInput[IN_BUFF_SIZE] = {'\0'};
 
-    sendModbusReq("127.0.0.1", 502, NULL, 0, NULL, 0);
+    printf("Input data: ");
+    fgets(*userInput, sizeof(userInput), stdin);
+
+    errorCode = writeMultipleRegisters(SERVER_IP, SERVER_PORT, 0, sizeof(userInput), (uint8_t *)userInput);
+    if (errorCode < 0) {
+        printf("[Client][WMR] - %d\n", errorCode);
+    }
+
     return 0;
 }

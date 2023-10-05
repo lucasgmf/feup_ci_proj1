@@ -37,11 +37,15 @@ $(BIN)/app.$(BUILDEXTENS): $(APP) $(SRC)/*.c
 
 .PHONY: slave
 slave:
-	sudo ./$(MONITORS)/$(MB_SLAVE_MONITOR).$(BUILDEXTENS)  -m tcp -p 502
+	./$(MONITORS)/$(MB_SLAVE_MONITOR).$(BUILDEXTENS) -m tcp -p 502
+
+.PHONY: dahyun
+dahyun:
+	./$(MONITORS)/$(MB_SLAVE_MONITOR).$(BUILDEXTENS) -m tcp 
 
 .PHONY: client
 client:
-	sudo ./$(MONITORS)/$(MB_CLIENT_MONITOR).$(BUILDEXTENS) -m tcp 127.0.0.1 
+	./$(MONITORS)/$(MB_CLIENT_MONITOR).$(BUILDEXTENS) -m tcp 127.0.0.1 
 
 .PHONY: run
 run:
