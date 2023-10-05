@@ -1,3 +1,6 @@
+#ifndef _MODBUS_APP_H_
+#define _MODBUS_APP_H_
+
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -15,6 +18,9 @@
 #define TIMEOUT_SEC 5
 #define TIMEOUT_USEC 0
 
-void APDUprint(uint8_t* APDU, uint16_t APDUlen);
+int connectToServer(char* ip, int port);
+int disconnectFromServer(int socketfd);
 
-int writeMultipleRegisters(int socketfd, uint16_t startingAdress, uint16_t numberOfRegisters, int* rlen);
+uint16_t* readHoldingRegisters(int socketfd, uint16_t startingAddress, uint16_t numberOfRegisters, int* len);
+
+#endif  // _MODBUS_APP_H_

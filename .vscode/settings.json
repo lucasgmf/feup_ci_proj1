@@ -4,6 +4,9 @@
         "*.py": "python",
         "ctype.h": "c",
         "modbusapp.h": "c",
-        "modbustcp.h": "c"
+        "modbustcp.h": "c",
+        "socket.h": "c",
+        "stdbool.h": "c",
+        "stdlib.h": "c"
     }
 }

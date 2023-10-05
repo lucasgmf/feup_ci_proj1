@@ -9,7 +9,7 @@ DEBUG_LEVEL=2
 
 # _DEBUG is used to include internal logging of errors and general information. Levels go from 1 to 3, highest to lowest priority respectively
 # _PRINT_PACKET_DATA is used to print the packet data that is received by RX
-CFLAGS = -Wall -Wno-unknown-pragmas -Wno-implicit-function-declaration -Wno-unused-variable -g -D _DEBUG=$(DEBUG_LEVEL)
+CFLAGS = -Wall -g -D _DEBUG=$(DEBUG_LEVEL) 
 
 SRC = src
 INCLUDE = include
@@ -38,10 +38,6 @@ $(BIN)/app.$(BUILDEXTENS): $(APP) $(SRC)/*.c
 .PHONY: slave
 slave:
 	./$(MONITORS)/$(MB_SLAVE_MONITOR).$(BUILDEXTENS) -m tcp -p 502
-
-.PHONY: dahyun
-dahyun:
-	./$(MONITORS)/$(MB_SLAVE_MONITOR).$(BUILDEXTENS) -m tcp 
 
 .PHONY: client
 client:
