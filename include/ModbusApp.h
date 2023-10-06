@@ -21,6 +21,6 @@
 int connectToServer(char* ip, int port);
 int disconnectFromServer(int socketfd);
 
-uint16_t* readHoldingRegisters(int socketfd, uint16_t startingAddress, uint16_t numberOfRegisters, int* len);
+uint8_t* readHoldingRegisters(int socketfd, uint16_t startingAddress, uint16_t numberOfRegisters, int* len);
 
 #endif  // _MODBUS_APP_H_

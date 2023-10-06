@@ -12,9 +12,14 @@
 #define MBAP_SIZE 7
 #define UNIT_ID 0x01  // Slave ID
 
+// TODO definir limite de registros para escrever
+// TODO escolher porta do servidor
+// TODO escolher unit id
+// TODO escolher registros a manipular
+
 int tcpCreateSocket() {
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
-
+    // printf("[TCPcreate] - Socket: %d\n", socketfd);
     if (socketfd < 0) {
         printf("[TCP] - Error creating socket\n");
         return -1;
@@ -49,6 +54,7 @@ int tcpDisconnect(int socketfd) {
 }
 
 int tcpSendMBAP(int socketfd, uint8_t *pdu, int pduLen, int id) {
+    printf("[TCP] - socketfd: %d, pduLen: %d, id: %d\n", socketfd, pduLen, id);
     if (socketfd < 0) {
         printf("[TCP] - Error: Invalid socket file descriptor\n");
         return -1;
@@ -66,18 +72,19 @@ int tcpSendMBAP(int socketfd, uint8_t *pdu, int pduLen, int id) {
     // unsigned char MBAP[MBAP_SIZE];
     uint8_t MBAP[MBAP_SIZE];
 
-    MBAP[0] = (uint8_t)(id >> 8) & 0xFF;      // Transaction identifier (high byte)
-    MBAP[1] = (uint8_t)id & 0xFF;             // Transaction identifier (low byte)
-    MBAP[2] = (uint8_t)(0x00 >> 8) & 0xFF;    // Protocol identifier (high byte) - 0x00 = Modbus
-    MBAP[3] = (uint8_t)0x00 & 0xFF;           // Protocol identifier (low byte) - 0x00 = Modbus
-    MBAP[4] = (uint8_t)(pduLen >> 8) & 0xFF;  // Message length (high byte)
-    MBAP[5] = (uint8_t)pduLen & 0xFF;         // Message length (low byte)
-    MBAP[6] = (uint8_t)UNIT_ID;               // Unit identifier - Slave ID
+    MBAP[0] = (uint8_t)(id >> 8) & 0xFF;            // Transaction identifier (high byte)
+    MBAP[1] = (uint8_t)id & 0xFF;                   // Transaction identifier (low byte)
+    MBAP[2] = (uint8_t)(0x00 >> 8) & 0xFF;          // Protocol identifier (high byte) - 0x00 = Modbus
+    MBAP[3] = (uint8_t)0x00 & 0xFF;                 // Protocol identifier (low byte) - 0x00 = Modbus
+    MBAP[4] = (uint8_t)((pduLen + 1) >> 8) & 0xFF;  // Message length (high byte)
+    MBAP[5] = (uint8_t)(pduLen + 1) & 0xFF;         // Message length (low byte)
+    MBAP[6] = (uint8_t)UNIT_ID;                     // Unit identifier - Slave ID
 
-    pduLen = pduLen - 1;  // PDU length - unit identifier
+    // pduLen += 1;
+    // pduLen = pduLen - 1;  // PDU length - unit identifier
 
     printf("[TCP] - MBAP: ");
-    for (int i = 0; i < sizeof(MBAP_SIZE); i++) {
+    for (int i = 0; i < MBAP_SIZE; i++) {
         printf("%02X ", MBAP[i]);
     }
     for (int i = 0; i < pduLen; i++) {
@@ -87,73 +94,76 @@ int tcpSendMBAP(int socketfd, uint8_t *pdu, int pduLen, int id) {
 
     // (MBAPDU = MBAP + PDU)
     // Writing MBAP header to socket
-    if (write(socketfd, MBAP, MBAP_SIZE) < 0) {
-        printf("[TCP] - Error sending MBAP header to socket\n");
-        return -1;
-    }
-    // Writing PDU to socket
-    if (write(socketfd, pdu, pduLen) < 0) {
-        printf("[TCP] - Error sending PDU to socket\n");
-        return -1;
-    }
 
-    // uint8_t *MBAPDU = (uint8_t *)malloc((MBAP_SIZE + pduLen) * sizeof(*MBAPDU));
-    // if (MBAPDU == NULL) {
-    //     printf("[TCP] - Error: Failed to allocate memory\n");
-    //     return -1;
-    // }
-    // memcpy(MBAPDU, MBAP, MBAP_SIZE);
-    // memcpy(MBAPDU + MBAP_SIZE, pdu, pduLen);
+    int sizePacket = MBAP_SIZE + pduLen;
+    // printf("[TCP] - sizePacket: %d\n", sizePacket);
 
-    // printf("[TCP] - MBAPDU: ");
-    // for (int i = 0; i < totalLen; i++) {
-    //     printf("%02X ", MBAPDU[i]);
-    // }
-    // printf("\n");
+    uint8_t *packet = (uint8_t *)malloc(sizePacket * sizeof(packet));
+    memcpy(packet, MBAP, MBAP_SIZE);
+    memcpy(packet + MBAP_SIZE, pdu, pduLen);
 
-    // int n = 0, sent = 0;
-
-    // while (n < totalLen) {
-    //     n = send(socketfd, MBAPDU + sent, totalLen - sent, 0);
-    //     printf("[TCP] - Sent %d bytes\n", n);
-
-    //     if (n < 0) {
-    //         printf("[TCP] - Error sending MBAP header to socket\n");
-    //         return -1;
-    //     }
-    //     sent += n;
-    // }
-
-    // printf("[TCP] - Finished sending packet with %d bytes\n", sent);
-    // free(MBAPDU);
-    // return ((MBAP[4] << 8) + MBAP[5]);  // recover Lenght field
-
-    return MBAP_SIZE + pduLen;
-}
-
-uint8_t *tcpRecieveMBAP(int socketfd, uint8_t *response, int responseLen) {
-    if (socketfd < 0) {
-        printf("[TCP] - Error: Invalid socket file descriptor\n");
-        return NULL;
-    }
-    if (responseLen < 0) {
-        printf("[TCP] - Error: Invalid response length\n");
-        return NULL;
-    }
-
-    printf("[TCP] - Starting reciving response\n");
-
-    if (read(socketfd, response, responseLen) > 0) {
-        printf("[TCP] - Reading data\n");
-        // printf("[TCP] - Error reading response from socket\n");
-        // return NULL;
-    }
-
-    printf("\n[TCP] - Message received from Slave:");
-    for (int i = 0; i < responseLen; i++) {
-        printf("%.2X ", response[i]);
+    printf("[TCP] - packet: ");
+    for (int i = 0; i < sizePacket; i++) {
+        printf("%02X ", packet[i]);
     }
     printf("\n");
 
-    return response;
+    int bytesSent = sendModbusPacket(socketfd, packet, sizePacket);
+    printf("[TCP] - bytesSent: %d\n", bytesSent);
+
+    if (bytesSent < 0) {
+        printf("[TCP] - Error sending MBAPDU\n");
+        return -1;
+    }
+    // free(packet);
+
+    int bytesRecieved = recieveModbusPacket(socketfd, packet, sizePacket);
+    if (bytesRecieved < 0) {
+        printf("[TCP] - Error recieving MBAPDU from server\n");
+        return -1;
+    }
+    printf("[TCP] - packet: ");
+    for (int i = 0; i < sizePacket; i++) {
+        printf("%02X ", packet[i]);
+    }
+    printf("[TCP] - Size of data: %d\n", (packet[4] >> 8) + packet[5] - 1);
+    printf("[TCP] - bytesRecieved: %d\n", bytesRecieved);
+
+    
+
+    return 1;
+}
+
+int sendModbusPacket(int socketfd, u_int8_t *packet, int responseLen) {
+    printf("[TCP] - socketfd: %d,responseLen: %d\n", socketfd, responseLen);
+    if (socketfd < 0) {
+        printf("[TCP] - Error: Invalid socket file descriptor\n");
+        return -1;
+    }
+    if (responseLen < 0) {
+        printf("[TCP] - Error: Invalid response length\n");
+        return -1;
+    }
+    int bytesSent = 0, k = 0;
+    while (bytesSent < responseLen) {
+        k = send(socketfd, packet + bytesSent, responseLen - bytesSent, 0);
+        // printf("[TCP] - bytesSent: %d, k: %d\n", bytesSent, k);
+        if (k < 0) {
+            printf("[TCP] - Error sending response\n");
+            return -1;
+        }
+        printf("[TCP] - Sent %d bytes of data\n", k - 7);
+        bytesSent += k;
+    }
+}
+
+int recieveModbusPacket(int socketfd, u_int8_t *packet, int sizePacket) {
+    // TODO check parameters
+    int bytesRecieved = recv(socketfd, packet, sizePacket, 0);
+    if (bytesRecieved < 0) {
+        printf("[TCP] - Error recieving response\n");
+        return -1;
+    }
+    printf("[TCP] - Recieved %d bytes of data\n", bytesRecieved);
+    return bytesRecieved;
 }

@@ -24,17 +24,17 @@ int connectToServer(char* ip, int port) {
     if (socketfd < 0) {
         printf("[App] - Error creating socket\n");
         return -1;
-    }
-
+    }  // printf("[App] - Socket: %d\n", socketfd);
     tcpConnect(socketfd, ip, port);
-    return 1;
+
+    return socketfd;
 }
 
 int disconnectFromServer(int socketfd) {
     return tcpDisconnect(socketfd);
 }
 
-uint16_t* readHoldingRegisters(int socketfd, uint16_t startingAddress, uint16_t numberOfRegisters, int* registerLen) {
+uint8_t* readHoldingRegisters(int socketfd, uint16_t startingAddress, uint16_t numberOfRegisters, int* registerLen) {
     if (socketfd < 0) {
         printf("[App][RHR] - Error: Invalid socket\n");
         return NULL;
@@ -78,30 +78,14 @@ uint16_t* readHoldingRegisters(int socketfd, uint16_t startingAddress, uint16_t 
     }
     printf("\n");
 
-    int id = 0x03;  // function code for read multiple registers
+    int id = 1;
 
-    if (tcpSendMBAP(socketfd, pdu, pduLen, id) < 0) {
+    int registersSend = tcpSendMBAP(socketfd, pdu, pduLen, id);
+    if (registersSend < 0) {
         printf("[App][RHR] - Error: Failed to send MBAPDU\n");
         return NULL;
     }
-
-    free(pdu);
-
-    uint8_t* response = (uint8_t*)malloc(pduLen + MBAP_SIZE);
-    if (response == NULL) {
-        printf("[App][RHR] - Error: Failed to allocate memory\n");
-        return NULL;
-    }
-
-    printf("[App][RHR] - Starting reciving response\n");
-    response = tcpRecieveMBAP(socketfd, response, *registerLen);
-    printf("[App][RHR] - Recieving response ended.\n");
-
-    if (response == NULL) {
-        printf("[App][RHR] - Error: Failed to recieve response\n");
-        return NULL;
-    }
-    *registerLen = pduLen + MBAP_SIZE;
-
-    return (uint16_t*)response;
+    printf("[App][RHR] - MBAPDU sent successfully\n");
+    
+    return NULL;
 }

@@ -34,6 +34,7 @@ int main() {
     // }
 
     int socketfd = connectToServer(SERVER_IP, SERVER_PORT);
+
     if (socketfd < 0) {
         printf("[Main] - Error connecting to server\n");
         return -1;
@@ -41,10 +42,10 @@ int main() {
         printf("[Main] - Connected to server\n");
     }
 
-    uint16_t readQuantity = 10;
+    uint16_t readQuantity = 2;
     uint16_t readAddress = 0;
 
-    uint16_t* data = NULL;
+    uint8_t* data = NULL;
 
     int dataLength = 0;
 
