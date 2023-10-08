@@ -58,34 +58,33 @@ uint8_t* readHoldingRegisters(int socketfd, uint16_t startingAddress, uint16_t n
 
     // *registerLen = 5;  // 1 byte for function code + 2 bytes for starting address + 2 bytes for number of registers
 
-    int pduLen = 5;
+    int apduLen = 5;
 
-    uint8_t* pdu = (uint8_t*)malloc(pduLen);
-    if (pdu == NULL) {
+    uint8_t* apdu = (uint8_t*)malloc(apduLen);
+    if (apdu == NULL) {
         printf("[App][RHR] - Error: Failed to allocate memory\n");
         return NULL;
     }
 
-    pdu[0] = (uint8_t)FC_RMR;                    // function code
-    pdu[1] = (uint8_t)startingAddress >> 8;      // start address (high byte)
-    pdu[2] = (uint8_t)startingAddress & 0xFF;    // start address (low byte)
-    pdu[3] = (uint8_t)numberOfRegisters >> 8;    // number of registers (high byte)
-    pdu[4] = (uint8_t)numberOfRegisters & 0xFF;  // number of registers (low byte)
+    apdu[0] = (uint8_t)FC_RMR;                    // function code
+    apdu[1] = (uint8_t)startingAddress >> 8;      // start address (high byte)
+    apdu[2] = (uint8_t)startingAddress & 0xFF;    // start address (low byte)
+    apdu[3] = (uint8_t)numberOfRegisters >> 8;    // number of registers (high byte)
+    apdu[4] = (uint8_t)numberOfRegisters & 0xFF;  // number of registers (low byte)
 
-    printf("[App][RHR] - pdu: ");
-    for (int i = 0; i < pduLen; i++) {
-        printf("%02X ", pdu[i]);
-    }
-    printf("\n");
+    printf("[App][RHR] - apdu to send: ");
+    printPacket(apdu, apduLen);
 
-    int id = 1;
-
-    int registersSend = tcpSendMBAP(socketfd, pdu, pduLen, id);
-    if (registersSend < 0) {
-        printf("[App][RHR] - Error: Failed to send MBAPDU\n");
+    int bytesRecieved = sendModbusRequest(socketfd, apdu, apduLen);
+    if (bytesRecieved < 0) {
+        printf("[App][RHR] - Error sending request\n");
         return NULL;
     }
-    printf("[App][RHR] - MBAPDU sent successfully\n");
-    
-    return NULL;
+    printf("[App][RHR] - recieved %d bytes\n", bytesRecieved);
+    printf("[App][RHR] - apdu recieved: ");
+    printPacket(apdu, apduLen);
+
+    // free(apdu);
+    *registerLen = apduLen;
+    return apdu;
 }
