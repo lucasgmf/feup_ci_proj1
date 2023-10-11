@@ -12,26 +12,29 @@
 #define MBAP_SIZE 7
 #define UNIT_ID 0x01  // Slave ID
 
-// TODO definir limite de registros para escrever
-// TODO escolher porta do servidor
-// TODO escolher unit id
-// TODO escolher registros a manipular
+#define DEBUG
 
-// TODO free memory
+#ifdef DEBUG
+
+#define PRINT(...) printf(__VA_ARGS__)
+
+#else
+
+#define PRINT(...)
+
+#endif
 
 void printPacket(uint8_t *packet, int packetLen) {
-    // printf("----------------------------------------------\n");
-    // printf("packet: ");
     for (int i = 0; i < packetLen; i++) {
-        printf("%02X ", packet[i]);
+        PRINT("%02X ", packet[i]);
     }
-    printf("\n");
+    PRINT("\n");
 }
 
 int tcpCreateSocket() {
     int socketfd = socket(AF_INET, SOCK_STREAM, 0);
     if (socketfd < 0) {
-        printf("[TCP] - Error creating socket\n");
+        PRINT("[TCP] - Error creating socket\n");
         return -1;
     }
 
@@ -46,7 +49,7 @@ int tcpConnect(int socketfd, char *ip, int port) {
     server.sin_port = htons(port);
 
     if (connect(socketfd, (struct sockaddr *)&server, sizeof(server)) == -1) {
-        printf("[TCP] - Error: Connection to the server failed\n");
+        PRINT("[TCP] - Error: Connection to the server failed\n");
         return -1;
     }
     return 1;
@@ -56,103 +59,76 @@ int tcpDisconnect(int socketfd) {
     return close(socketfd);
 }
 
-int sendModbusRequest(int socketfd, uint16_t id, uint8_t *apdu, int apduLen) {
-    uint8_t *mbap = (uint8_t *)malloc(MBAP_SIZE * sizeof(mbap));
-    if (mbap == NULL) {
-        printf("[TCP][SMR] - Error: Failed to allocate memory\n");
+int receivePacket(int socketfd, u_int8_t *packet, int sizePacket) {
+    if (socketfd < 0) {
+        PRINT("[TCP] - Error: Invalid socket file descriptor\n");
+        return -1;
+    }
+    if (sizePacket < 0) {
+        PRINT("[TCP] - Error: Invalid packet size\n");
         return -1;
     }
 
-    // printf("apduLen %d\n", apduLen);
+    int bytesReceived = 0;
 
-    // id++;
-    mbap[0] = (uint8_t)id >> 8;               // Transaction Identifier
-    mbap[1] = (uint8_t)id & 0xFF;             // Transaction Identifier
-    mbap[2] = (uint8_t)0x00;                  // Protocol Identifier
-    mbap[3] = (uint8_t)0x00;                  // Protocol Identifier
-    mbap[4] = (uint8_t)(apduLen + 1) >> 8;    // Length
-    mbap[5] = (uint8_t)(apduLen + 1) & 0xFF;  // Length
-    mbap[6] = (uint8_t)0x01;                  // Unit Identifier
+    bytesReceived = recv(socketfd, packet, sizePacket, 0);
+    if (bytesReceived < 0) {
+        PRINT("[TCP] - Error recieving response\n");
+        return -1;
+    }
+    return bytesReceived;
+}
 
-    int pduLen = apduLen;
-
-    uint8_t *packet = (uint8_t *)malloc((MBAP_SIZE + pduLen) * sizeof(packet));
-    if (packet == NULL) {
-        printf("[TCP][SMR] - Error: Failed to allocate memory\n");
+int receiveModbusPacket(int socketfd, uint8_t id, uint8_t *apdu, int apduLen) {
+    uint8_t *mbapHeader = (uint8_t *)malloc(MBAP_SIZE * sizeof(mbapHeader));
+    if (mbapHeader == NULL) {
+        PRINT("[TCP][RMP] - Error: Failed to allocate memory\n");
         return -1;
     }
 
-    // printf("pduLen: %d\n", pduLen);
-    memcpy(packet, mbap, MBAP_SIZE);
-    memcpy(packet + MBAP_SIZE, apdu, apduLen);
-
-    printf("[TCP][SMR] - Sending pdu: ");
-    printPacket(packet, pduLen + MBAP_SIZE);
-
-    int bytesSent = sendModbusPacket(socketfd, packet, pduLen + MBAP_SIZE);
-    if (bytesSent < 0) {
-        printf("[TCP][SMR] - Error sending request\n");
+    PRINT("%s %s %d\n", __FILE__, __func__, __LINE__);
+    int bytesReceived = receivePacket(socketfd, mbapHeader, MBAP_SIZE);
+    if (bytesReceived < 0) {
+        PRINT("[TCP][RMP] - Error recieving response\n");
         return -1;
     }
+    uint16_t apduResponseLen = ((mbapHeader[4] << 8) | mbapHeader[5]) - 1;
 
-    // TODO check recieved data
-    uint8_t *mbapResponse = (uint8_t *)malloc(MBAP_SIZE * sizeof(mbapResponse));
-    if (mbapResponse == NULL) {
-        printf("[TCP][SMR] - Error: Failed to allocate memory\n");
-        return -1;
-    }
-    int bytesRecieved = recieveModbusPacket(socketfd, mbapResponse, MBAP_SIZE);
-    if (bytesRecieved < 0) {
-        printf("[TCP][SMR] - Error recieving response\n");
-        return -1;
-    }
-
-    uint16_t apduResponseLen = ((mbapResponse[4] << 8) | mbapResponse[5]) - 1;
-
-    // printf("[TCP][SMR] - apduResponseLen: %d\n", apduResponseLen);
+    PRINT("[TCP][RMP] - mbapHeader[4] = %d , mbapHeader[5] = %d\n", mbapHeader[4], mbapHeader[5]);
+    PRINT("[TCP][RMP] - apduResponseLen: %d\n", apduResponseLen);
 
     uint8_t *apduResponse = (uint8_t *)malloc(apduResponseLen);
     if (apduResponse == NULL) {
-        printf("[TCP][SMR] - Error: Failed to allocate memory\n");
-        return -1;
-    }
-    printf("[TCP][SMR] - mbapResponse recieved: ");
-    printPacket(mbapResponse, MBAP_SIZE);
-
-    bytesRecieved = recieveModbusPacket(socketfd, apduResponse, apduResponseLen);
-    if (bytesRecieved < 0) {
-        printf("[TCP][SMR] - Error recieving response\n");
+        PRINT("[TCP][RMP] - Error: Failed to allocate memory\n");
         return -1;
     }
 
+    bytesReceived = receivePacket(socketfd, apduResponse, apduResponseLen);
+    if (bytesReceived < 0) {
+        PRINT("[TCP][RMP] - Error recieving response\n");
+        return -1;
+    }
+
+    // * Copying apllication data response to apdu
     memcpy(apdu, apduResponse, apduResponseLen);
-    printf("[TCP][SMR] - apdu recieved: ");
-    printPacket(apdu, apduResponseLen);
-
-    // printf("[TCP][SMR] - apduResponseLen: %d\n", apduResponseLen);
-
-    free(mbap);
-    printf("[TCP][SMR] - apduResponseLen: %d\n", apduResponseLen);
-
-    // memcpy(apduResponse, apdu, apduResponseLen);
 
     return 0;
 }
 
 int sendModbusPacket(int socketfd, u_int8_t *packet, int responseLen) {
     if (socketfd < 0) {
-        printf("[TCP] - Error: Invalid socket file descriptor\n");
+        PRINT("[TCP] - Error: Invalid socket file descriptor\n");
         return -1;
     }
     if (responseLen < 0) {
-        printf("[TCP] - Error: Invalid response length\n");
+        PRINT("[TCP] - Error: Invalid response length\n");
         return -1;
     }
     int bytesSent = 0, k = 0;
     while (bytesSent < responseLen) {
         k = send(socketfd, packet + bytesSent, responseLen - bytesSent, 0);
         if (k < 0) {
-            printf("[TCP] - Error sending response\n");
+            PRINT("[TCP] - Error sending response\n");
             return -1;
         }
         bytesSent += k;
@@ -160,14 +136,48 @@ int sendModbusPacket(int socketfd, u_int8_t *packet, int responseLen) {
     return bytesSent;
 }
 
-uint8_t recieveModbusPacket(int socketfd, u_int8_t *packet, int sizePacket) {
-    // TODO check parameters
-    int bytesRecieved = 0;
-
-    bytesRecieved = recv(socketfd, packet, sizePacket, 0);
-    if (bytesRecieved < 0) {
-        printf("[TCP] - Error recieving response\n");
+int sendModbusRequest(int socketfd,
+                      uint16_t id,
+                      uint8_t *apdu,
+                      int apduLen) {
+    uint8_t *mbapHeader = (uint8_t *)malloc(MBAP_SIZE * sizeof(mbapHeader));
+    if (mbapHeader == NULL) {
+        PRINT("[TCP][SMR] - Error: Failed to allocate memory\n");
         return -1;
     }
-    return bytesRecieved;
+
+    // id++;
+    mbapHeader[0] = (uint8_t)(id >> 8);               // Transaction Identifier
+    mbapHeader[1] = (uint8_t)(id & 0xFF);             // Transaction Identifier
+    mbapHeader[2] = (uint8_t)(0x00);                  // Protocol Identifier
+    mbapHeader[3] = (uint8_t)(0x00);                  // Protocol Identifier
+    mbapHeader[4] = (uint8_t)((apduLen + 1) >> 8);    // Length
+    mbapHeader[5] = (uint8_t)((apduLen + 1) & 0xFF);  // Length
+    mbapHeader[6] = (uint8_t)(UNIT_ID);               // Unit Identifier
+
+    int pduLen = apduLen;
+
+    uint8_t *packet = (uint8_t *)malloc((MBAP_SIZE + pduLen) * sizeof(packet));
+    if (packet == NULL) {
+        PRINT("[TCP][SMR] - Error: Failed to allocate memory\n");
+        return -1;
+    }
+
+    memcpy(packet, mbapHeader, MBAP_SIZE);
+    memcpy(packet + MBAP_SIZE, apdu, apduLen);
+
+    int bytesSent = sendModbusPacket(socketfd, packet, MBAP_SIZE + pduLen);
+    // PRINT("[TCP] - bytesSent: %d\n", bytesSent);
+
+    if (bytesSent < 0) {
+        PRINT("[TCP][SMR] - Error sending request\n");
+        return -1;
+    }
+
+    // free(packet);
+
+    return 0;
 }
+
+#undef PRINT
+#undef DEBUG

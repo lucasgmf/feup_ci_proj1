@@ -14,6 +14,7 @@ int tcpCreateSocket();
 int tcpConnect(int socketfd, char *ip, int port);
 int tcpDisconnect(int socketfd);
 int sendModbusRequest(int socketfd, uint16_t id, uint8_t *apdu, int apduLen);
-int sendModbusPacket(int socketfd, u_int8_t *packet, int responseLen);
-uint8_t recieveModbusPacket(int socketfd, u_int8_t *packet, int sizePacket);
+int receiveModbusPacket(int socketfd, uint8_t id, uint8_t *apdu, int apduLen);
+
+
 #endif  // _MODBUS_TCP_H_

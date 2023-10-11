@@ -36,10 +36,10 @@ int main() {
     // Create socket
     socket_desk = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (socket_desk < 0) {
-        printf("Error creating socket\n");
+        PRINT("Error creating socket\n");
         return -1;
     } else {
-        printf("Socket created\n");
+        PRINT("Socket created\n");
     }
 
     // Prepare sockaddr_in structure
@@ -49,52 +49,52 @@ int main() {
 
     // Bind socket to port
     if (bind(socket_desk, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        printf("Error binding socket to port\n");
+        PRINT("Error binding socket to port\n");
         return -1;
     } else {
-        printf("Socket binded to port\n");
+        PRINT("Socket binded to port\n");
     }
 
     // Listen for connections
     if (listen(socket_desk, 3) < 0) {
-        printf("Error listening for connections\n");
+        PRINT("Error listening for connections\n");
         return -1;
     }
-    printf("Listening for connections on port %d...\n", SERVER_PORT);
+    PRINT("Listening for connections on port %d...\n", SERVER_PORT);
 
     // Accept connection from an incoming client
     out = sizeof(struct sockaddr_in);
     in = accept(socket_desk, (struct sockaddr *)&server_addr, (socklen_t *)&out);
     if (in < 0) {
-        printf("Error accepting connection\n");
+        PRINT("Error accepting connection\n");
         return -1;
     } else {
-        printf("Connection accepted\n");
+        PRINT("Connection accepted\n");
     }
 
     while (!find(in_buffer, '#')) {
         // Receive a message from client
         int bytes_received = recv(in, in_buffer, IN_BUFF_SIZE, 0);
         if (bytes_received < 0) {
-            printf("Error receiving message from client\n");
+            PRINT("Error receiving message from client\n");
             return -1;
         } else {
-            printf("[INFO] - Message received from client: %s\n", in_buffer);
-            printf("[INFO] - Recieved %d bytes\n", (int)strlen(in_buffer));
+            PRINT("[INFO] - Message received from client: %s\n", in_buffer);
+            PRINT("[INFO] - Recieved %d bytes\n", (int)strlen(in_buffer));
         }
 
         // Send message to client
         // out_buffer = "Hello from server";
         toUpperCase(in_buffer);
         out_buffer = in_buffer;
-        printf("[INFO] - Message to send to client: %s\n", out_buffer);
+        PRINT("[INFO] - Message to send to client: %s\n", out_buffer);
 
         if (send(in, out_buffer, strlen(out_buffer), 0) < 0) {
-            printf("Error sending message to client\n");
+            PRINT("Error sending message to client\n");
             return -1;
         } else {
-            printf("[INFO] - Message sent to client\n");
-            printf("[INFO] - Sending %d bytes\n", (int)strlen(in_buffer));
+            PRINT("[INFO] - Message sent to client\n");
+            PRINT("[INFO] - Sending %d bytes\n", (int)strlen(in_buffer));
         }
     }
     return 0;
