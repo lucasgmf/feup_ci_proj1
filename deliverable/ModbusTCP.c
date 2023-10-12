@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #define MBAP_SIZE 7
-#define UNIT_ID 53  // slave id
+#define UNIT_ID 51  // slave id
 
 #define TIMEOUT_SECONDS 2
 #define TIMEOUT_MICROSECONDS 0
@@ -167,7 +167,6 @@ int sendModbusRequest(int socketfd, uint16_t id, uint8_t *apdu, int apduLen) {
     mbapHeader[4] = (uint8_t)((apduLen + 1) >> 8);    // Length
     mbapHeader[5] = (uint8_t)((apduLen + 1) & 0xFF);  // Length
     mbapHeader[6] = (uint8_t)(UNIT_ID);               // Unit Identifier
-    id++;
 
     int pduLen = apduLen;
 

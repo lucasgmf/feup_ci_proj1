@@ -43,7 +43,7 @@ int connectToServer(char* ip, int port) {
 int disconnectFromServer(int socketfd) { return tcpDisconnect(socketfd); }
 
 int readHoldingRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
-                         uint16_t quantity, uint16_t* dataToRead) {
+                         uint16_t quantity, uint8_t* dataToRead) {
     if (socketfd < 0) {
         PRINT("[App][RHR] - Error: Invalid socket\n");
         return -1;
