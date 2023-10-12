@@ -17,7 +17,7 @@
 //     printf("\n");
 // }
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 
@@ -72,5 +72,6 @@ int main() {
     disconnectFromServer(socketfd);
     return 0;
 }
+
 #undef PRINT
 #undef DEBUG

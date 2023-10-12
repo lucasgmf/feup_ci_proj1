@@ -17,7 +17,7 @@
 #define TIMEOUT_SECONDS 2
 #define TIMEOUT_MICROSECONDS 0
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 

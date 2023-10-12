@@ -17,7 +17,7 @@
 #define MAX_WR_REGS 123  // maximum number of registers that can be written
 #define MAX_RD_REGS 125  // maximum number of registers that can be read
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 
