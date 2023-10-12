@@ -12,7 +12,7 @@
 #define MBAP_SIZE 7
 #define UNIT_ID 0x01  // Slave ID
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 

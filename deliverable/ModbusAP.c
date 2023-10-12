@@ -83,9 +83,7 @@ int readHoldingRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
     apdu[3] = (uint8_t)(quantity >> 8);    // number of registers (high byte)
     apdu[4] = (uint8_t)(quantity & 0xFF);  // number of registers (low byte)
 
-    // PRINT("[App][RHR] - apdu: ");
-    // printPacket(apdu, apduLen);
-    int bytesSent = sendModbusRequest(socketfd, id, apdu, apduLen);
+   int bytesSent = sendModbusRequest(socketfd, id, apdu, apduLen);
     if (bytesSent < 0) {
         PRINT("[App][RHR] - Error sending request\n");
         return -1;
@@ -96,10 +94,11 @@ int readHoldingRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
     // * print data received
     for (int i = 0; i < quantity; i++)
         dataToRead[i] = (apdu[2 + i * 2] << 8) + apdu[3 + i * 2];
-    // PRINT("[App][RHR] - recieved: %d, quantity: %d\n", bytesReceived,
-    // quantity);
 
-    // *rlen = apduLen;
+    if (apdu[0] & 0x80) {
+        PRINT("checkForException: Exception code: %d\n", apdu[1]);
+        return apdu[1];
+    }
 
     return 0;
 }
@@ -169,6 +168,10 @@ int writeMultipleRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
     // * return data received
     // memcpy(data, apdu, apduLen);
 
+    if (apdu[0] & 0x80) {
+        PRINT("checkForException: Exception code: %d\n", apdu[1]);
+        return apdu[1];
+    }
     // *rlen = apduLen;
     return 0;
 }

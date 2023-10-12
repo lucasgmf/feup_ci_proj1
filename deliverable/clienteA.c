@@ -29,36 +29,13 @@
 
 #endif
 
-// int main() {
-//     int socketfd = connectToServer(LOCALHOST, PORT);
-//     if (socketfd == -1) {
-//         PRINT("Error connecting to server\n");
-//         return -1;
-//     }
-
-//     uint16_t unitID = 51;
-
-//     //* Ex1 - write 0x41 on register 121th register
-
-//     uint16_t valueToWrite[] = {0x41};
-//     uint16_t address = 121 - 1;  // write to register 121
-//     uint16_t quantity = 1;
-
-//     // uint8_t *buffer;
-
-//     writeMultipleRegisters(socketfd, unitID, address, quantity,
-//     valueToWrite);
-
-//     disconnectFromServer(socketfd);
-//     return 0;
-// }
 int main() {
     int socketfd = connectToServer(LOCALHOST, PORT);
     if (socketfd == -1) {
         PRINT("Error connecting to server\n");
         return -1;
     }
-    uint16_t TransactionID = 1;
+    uint16_t TransactionID = 53;
 
     uint16_t readQuantity = 5;
     uint16_t readAddress = 0;
@@ -69,30 +46,28 @@ int main() {
     uint16_t writeValue = 70;
     uint16_t writeQuantity = 1;
 
-    // uint8_t* buffer = NULL;
-    // int bufferLen = 0;
+    int result;
 
-    // uint8_t val[2] = {0x00, 0x00};
+    PRINT("Read Holding Registers request\n");
+    result = readHoldingRegisters(socketfd, TransactionID, readAddress,
+                                  readQuantity, dataToRead);
+    if (result != 0) {
+        PRINT("Error reading registers with error: %d\n", result);
+        return -1;
+    }
 
-    while (1) {
-        PRINT("Read Holding Registers request\n");
-        if (readHoldingRegisters(socketfd, TransactionID, readAddress,
-                                 readQuantity, dataToRead) != 0) {
-            PRINT("Error reading registers\n");
-            break;
-        }
-        PRINT("Read Holding Registers response\n");
-        for (int i = 0; i < readQuantity; i++) {
-            PRINT("dataToRead[%d]: %d\n", i, dataToRead[i]);
-        }
+    PRINT("Read Holding Registers response\n");
+    for (int i = 0; i < readQuantity; i++) {
+        PRINT("dataToRead[%d]: %d\n", i, dataToRead[i]);
+    }
 
-        PRINT("\nWrite Single Register request\n");
-        writeMultipleRegisters(socketfd, TransactionID, writeAddress,
-                               writeQuantity, &writeValue);
+    PRINT("\nWrite Single Register request\n");
+    result = writeMultipleRegisters(socketfd, TransactionID, writeAddress,
+                                    writeQuantity, &writeValue);
 
-        writeValue = (writeValue + 1) % 0xFFFF;
-
-        sleep(1);
+    if (result != 0) {
+        PRINT("Error writing registers with error: %d\n", result);
+        return -1;
     }
     disconnectFromServer(socketfd);
     return 0;

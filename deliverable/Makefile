@@ -4,4 +4,4 @@ all :
 
 .Phony: run
 run :
-	./clienteA.exe
+	./clienteA
