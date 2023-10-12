@@ -2,10 +2,10 @@
 #include <unistd.h>
 
 #include "ModbusApp.h"
-// #define IN_BUFF_SIZE 100
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 502
+#define REMOTEHOST "10.277.113.1"
+#define LOCALHOST "127.0.0.1"
+#define PORT 502
 
 // void decimalPacketprint(void* packet, int packetLen) {
 
@@ -28,20 +28,32 @@
 
 #endif
 
-int checkForException(uint8_t* packet, int packetLen) {
+int checkForException(uint8_t* packet, int packetLen, int expectedLen) {
+    if (packet == NULL) {
+        PRINT("checkForException: packet is NULL\n");
+        return -1;
+    }
+
     if (packet[0] & 0x80) {
-        PRINT("Error code: %d\n", packet[1]);
+        PRINT("checkForException: Exception code: %d\n", packet[1]);
+        return packet[1];
+    }
+
+    if (packetLen != expectedLen) {
+        // incorrect response length
+        PRINT("checkForException: packetLen != expectedLen\n");
         return -1;
     }
     return 0;
 }
 
 int main() {
-    int socketfd = connectToServer(SERVER_IP, SERVER_PORT);
-    if (socketfd < 0) {
+    int socketfd = connectToServer(LOCALHOST, PORT);
+    if (socketfd == -1) {
         PRINT("Error connecting to server\n");
         return -1;
     }
+    uint16_t TransactionID = 1;
 
     uint16_t readQuantity = 5;
     uint16_t readAddress = 0;
@@ -52,17 +64,14 @@ int main() {
     uint16_t writeValue = 70;
     uint16_t writeQuantity = 1;
 
-    uint16_t id = 0;
-
     // uint8_t* buffer = NULL;
     // int bufferLen = 0;
 
     // uint8_t val[2] = {0x00, 0x00};
 
     while (1) {
-        // printf("----------------------------------------------\n");
         PRINT("Read Holding Registers request\n");
-        if (readHoldingRegisters(socketfd, id, readAddress, readQuantity, dataToRead) != 0) {
+        if (readHoldingRegisters(socketfd, TransactionID, readAddress, readQuantity, dataToRead) != 0) {
             PRINT("Error reading registers\n");
             break;
         }
@@ -71,24 +80,8 @@ int main() {
             PRINT("dataToRead[%d]: %d\n", i, dataToRead[i]);
         }
 
-        // printPacket(buffer, bufferLen);
-        // decimalPacketprint(buffer + 2, bufferLen - 2);
-
-        // free(buffer);
-
         PRINT("\nWrite Single Register request\n");
-        writeMultipleRegisters(socketfd, id, writeAddress, writeQuantity, &writeValue);
-        // if (buffer == NULL) {
-        //     printf("Write Single Register failed\n");
-        //     break;
-        // }
-        // if (buffer[0] & 0x80) {
-        //     printf("Error code: %d\n", buffer[1]);
-        //     break;
-        // }
-        // // printf("Final buffer: ");
-        // printPacket(buffer, bufferLen);
-        // free(buffer);
+        writeMultipleRegisters(socketfd, TransactionID, writeAddress, writeQuantity, &writeValue);
 
         writeValue = (writeValue + 1) % 0xFFFF;
 

@@ -34,7 +34,7 @@ int connectToServer(char* ip, int port) {
     if (socketfd < 0) {
         PRINT("[App] - Error creating socket\n");
         return -1;
-    }  // PRINT("[App] - Socket: %d\n", socketfd);
+    }
     tcpConnect(socketfd, ip, port);
 
     return socketfd;
