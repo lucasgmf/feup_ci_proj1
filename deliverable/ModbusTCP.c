@@ -1,16 +1,21 @@
 #include "ModbusTCP.h"
 
 #include <arpa/inet.h>
-#include <ctype.h>
-#include <stdbool.h>
+#include <fcntl.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #define MBAP_SIZE 7
-#define UNIT_ID 0x01  // Slave ID
+#define UNIT_ID 53
+
+#define TIMEOUT_SECONDS 2
+#define TIMEOUT_MICROSECONDS 0
 
 // #define DEBUG
 
@@ -36,6 +41,22 @@ int tcpCreateSocket() {
     if (socketfd < 0) {
         PRINT("[TCP] - Error creating socket\n");
         return -1;
+    }
+
+    //* set timeout
+    struct timeval timeout;
+    timeout.tv_sec = TIMEOUT_SECONDS;
+    timeout.tv_usec = TIMEOUT_MICROSECONDS;
+
+    if (setsockopt(socketfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
+                   sizeof(timeout)) < 0) {
+        return -2;
+    }
+    int optval = 1;
+
+    if (setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &optval,
+                   sizeof(optval)) < 0) {
+        return -2;
     }
 
     return socketfd;

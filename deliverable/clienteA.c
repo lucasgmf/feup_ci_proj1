@@ -42,7 +42,7 @@ int main() {
 
     uint16_t dataToRead[10];
 
-    uint16_t writeAddress = 5;
+    uint16_t writeAddress = 1;
     uint16_t writeValue = 70;
     uint16_t writeQuantity = 1;
 

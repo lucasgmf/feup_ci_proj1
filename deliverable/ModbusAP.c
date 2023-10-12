@@ -83,7 +83,9 @@ int readHoldingRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
     apdu[3] = (uint8_t)(quantity >> 8);    // number of registers (high byte)
     apdu[4] = (uint8_t)(quantity & 0xFF);  // number of registers (low byte)
 
-   int bytesSent = sendModbusRequest(socketfd, id, apdu, apduLen);
+    // PRINT("[App][RHR] - apdu: ");
+    // printPacket(apdu, apduLen);
+    int bytesSent = sendModbusRequest(socketfd, id, apdu, apduLen);
     if (bytesSent < 0) {
         PRINT("[App][RHR] - Error sending request\n");
         return -1;
