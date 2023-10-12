@@ -92,6 +92,10 @@ int readHoldingRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
     }
 
     int bytesReceived = receiveModbusPacket(socketfd, id, apdu, apduLen);
+    if (bytesReceived < 0) {
+        PRINT("[App][RHR] - Error receiving response\n");
+        return -1;
+    }
 
     // * print data received
     for (int i = 0; i < quantity; i++)
@@ -105,15 +109,6 @@ int readHoldingRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
     return 0;
 }
 
-/**
- * @brief
- *
- * @param socketfd
- * @param startingAddress
- * @param quantity
- * @param data
- * @return int
- */
 int writeMultipleRegisters(int socketfd, uint16_t id, uint16_t startingAddress,
                            uint16_t quantity, uint16_t* data) {
     if (socketfd < 0) {

@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #define MBAP_SIZE 7
-#define UNIT_ID 53
+#define UNIT_ID 53 // slave id
 
 #define TIMEOUT_SECONDS 2
 #define TIMEOUT_MICROSECONDS 0
