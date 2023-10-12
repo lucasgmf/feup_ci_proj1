@@ -12,12 +12,12 @@
 #include <unistd.h>
 
 #define MBAP_SIZE 7
-#define UNIT_ID 53 // slave id
+#define UNIT_ID 53  // slave id
 
 #define TIMEOUT_SECONDS 2
 #define TIMEOUT_MICROSECONDS 0
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 
@@ -95,6 +95,9 @@ int receivePacket(int socketfd, u_int8_t *packet, int sizePacket) {
         PRINT("[TCP] - Error recieving response\n");
         return -1;
     }
+    // PRINT("packet:");
+    // printPacket(packet, sizePacket);
+
     return bytesReceived;
 }
 
@@ -126,9 +129,6 @@ int receiveModbusPacket(int socketfd, uint8_t id, uint8_t *apdu, int apduLen) {
 
     // * Copying apllication data response to apdu
     memcpy(apdu, apduResponse, apduResponseLen);
-    // apduLen = apduResponseLen;
-    // PRINT("rlen1: %d\n", *rlen);
-
     return 0;
 }
 
@@ -160,7 +160,6 @@ int sendModbusRequest(int socketfd, uint16_t id, uint8_t *apdu, int apduLen) {
         return -1;
     }
 
-    // id++;
     mbapHeader[0] = (uint8_t)(id >> 8);               // Transaction Identifier
     mbapHeader[1] = (uint8_t)(id & 0xFF);             // Transaction Identifier
     mbapHeader[2] = (uint8_t)(0x00);                  // Protocol Identifier
@@ -168,6 +167,7 @@ int sendModbusRequest(int socketfd, uint16_t id, uint8_t *apdu, int apduLen) {
     mbapHeader[4] = (uint8_t)((apduLen + 1) >> 8);    // Length
     mbapHeader[5] = (uint8_t)((apduLen + 1) & 0xFF);  // Length
     mbapHeader[6] = (uint8_t)(UNIT_ID);               // Unit Identifier
+    id++;
 
     int pduLen = apduLen;
 
