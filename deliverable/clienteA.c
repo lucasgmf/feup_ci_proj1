@@ -167,7 +167,7 @@ int main() {
     }
 
     transactionID = 5;
-    startingAddress = 128 - 1;  // register 127
+    startingAddress = 128 - 1;  // register 128
     quantity = 1;
     result = writeMultipleRegisters(socket, transactionID, startingAddress,
                                     quantity, &C);
