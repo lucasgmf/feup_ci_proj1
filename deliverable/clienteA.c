@@ -77,6 +77,7 @@ int main() {
     int socket = connectToServer(LOCALHOST, PORT);
     if (socket == -1) {
         PRINT("Error connecting to server\n");
+        printf("Result: %d\n", socket);
         return -1;
     }
 
@@ -92,6 +93,8 @@ int main() {
                                     quantity, data);
     if (result != 0) {
         PRINT("Error writing registers with error: %d\n", result);
+        printf("Result: %d\n", result);
+
         return -1;
     }
 
@@ -106,6 +109,8 @@ int main() {
                                   quantity, A);
     if (result != 0) {
         PRINT("Error reading registers with error: %d\n", result);
+        printf("Result: %d\n", result);
+
         return -1;
     }
 
@@ -120,6 +125,8 @@ int main() {
                                   quantity, B);
     if (result != 0) {
         PRINT("Error reading registers with error: %d\n", result);
+        printf("Result: %d\n", result);
+
         return -1;
     }
     PRINT("ex3 done!\n");
@@ -152,6 +159,8 @@ int main() {
                                     quantity, &C);
     if (result != 0) {
         PRINT("Error writing registers with error: %d\n", result);
+        printf("Result: %d\n", result);
+
         return -1;
     }
     disconnectFromServer(socket);
@@ -163,6 +172,8 @@ int main() {
     socket = connectToServer(LOCALHOST, PORT);
     if (socket == -1) {
         PRINT("Error connecting to server\n");
+        printf("Result: %d\n", result);
+
         return -1;
     }
 
@@ -173,6 +184,8 @@ int main() {
                                     quantity, &C);
     if (result != 0) {
         PRINT("Error writing registers with error: %d\n", result);
+        printf("Result: %d\n", result);
+
         return -1;
     }
     disconnectFromServer(socket);
